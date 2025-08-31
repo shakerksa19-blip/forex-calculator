@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forex Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f2f2f2;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .name {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .username {
+      font-size: 14px;
+      color: gray;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      max-width: 400px;
+      margin: 20px auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      text-align: center;
+    }
+
+    input, select, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .profit {
+      color: green;
+      margin-top: 15px;
+    }
+
+    .loss {
+      color: red;
+      margin-top: 15px;
+    }
+
+    .toggle-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .toggle-buttons button {
+      width: 48%;
+      padding: 10px 0;
+      font-weight: bold;
+      cursor: pointer;
+      border: 1px solid #aaa;
+      background-color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    .toggle-buttons button.active {
+      background-color: #ddd;
+      border-color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="name">SHAKER</div>
+    <div class="username">@HH1HHI</div>
+  </div>
+
+  <!-- حاسبة الربح -->
+  <div class="container">
+    <h2>Forex Profit Calculator</h2>
+
+    <label for="pair">Trading Pair:</label>
+    <input list="pairs" id="pair" placeholder="Search or select pair" autocomplete="off" />
+
+    <label for="entry">Entry Price:</label>
+    <input type="number" id="entry" step="0.00001" />
+
+    <label for="target">Target Price:</label>
+    <input type="number" id="target" step="0.00001" />
+
+    <label for="lot">Lot Size:</label>
+    <input type="number" id="lot" step="0.01" />
+
+    <label for="type">Trade Type:</label>
+    <select id="type">
+      <option value="buy">Buy</option>
+      <option value="sell">Sell</option>
+    </select>
+
+    <button type="button" onclick="calculate()">Calculate Profit</button>
+
+    <h3 id="result"></h3>
+  </div>
+
+  <!-- حاسبة اللوت -->
+  <div class="container">
+    <h2>Lot Size Calculator</h2>
+
+    <label for="balance">Account Balance ($):</label>
+    <input type="number" id="balance" />
+
+    <div class="toggle-buttons">
+      <button type="button" id="btnPercent" class="active">Use % Risk</button>
+      <button type="button" id="btnAmount">Use $ Amount</button>
+    </div>
+
+    <div id="riskPercentDiv">
+      <label for="riskPercent">Risk % per Trade:</label>
+      <input type="number" id="riskPercent" step="0.1" value="1" />
+    </div>
+
+    <div id="riskAmountDiv" style="display:none;">
+      <label for="riskAmount">Risk Amount ($):</label>
+      <input type="number" id="riskAmount" />
+    </div>
+
+    <label for="stopLoss">Stop Loss (in Pips):</label>
+    <input type="number" id="stopLoss" />
+
+    <label for="lotPair">Trading Pair:</label>
+    <input list="pairs" id="lotPair" placeholder="Search or select pair" autocomplete="off" />
+
+    <button type="button" onclick="calculateLot()">Calculate Lot Size</button>
+
+    <h3 id="lotResult"></h3>
+  </div>
+
+  <!-- قائمة الأزواج -->
+  <datalist id="pairs">
+    <option value="XAUUSD">Gold (XAUUSD)</option>
+    <option value="XAGUSD">Silver (XAGUSD)</option>
+    <option value="EURUSD">EUR/USD</option>
+    <option value="GBPUSD">GBP/USD</option>
+    <option value="USDJPY">USD/JPY</option>
+    <option value="AUDUSD">AUD/USD</option>
+    <option value="NZDUSD">NZD/USD</option>
+    <option value="USDCAD">USD/CAD</option>
+    <option value="EURJPY">EUR/JPY</option>
+    <option value="EURGBP">EUR/GBP</option>
+    <option value="EURAUD">EUR/AUD</option>
+    <option value="EURCAD">EUR/CAD</option>
+    <option value="EURNZD">EUR/NZD</option>
+    <option value="GBPJPY">GBP/JPY</option>
+    <option value="GBPCAD">GBP/CAD</option>
+    <option value="GBPCHF">GBP/CHF</option>
+    <option value="GBPAUD">GBP/AUD</option>
+    <option value="AUDCAD">AUD/CAD</option>
+    <option value="AUDCHF">AUD/CHF</option>
+    <option value="AUDJPY">AUD/JPY</option>
+    <option value="AUDNZD">AUD/NZD</option>
+    <option value="NZDCAD">NZD/CAD</option>
+    <option value="USDGBP">USD/GBP</option>
+    <option value="USDAUD">USD/AUD</option>
+    <option value="CADJPY">CAD/JPY</option>
+  </datalist>
+
+<script>
+  // متغير للتحكم بطريقة المخاطرة (نسبة أو مبلغ)
+  let currentRiskType = 'percent';
+
+  // تفعيل الزر حسب الاختيار
+  const btnPercent = document.getElementById('btnPercent');
+  const btnAmount = document.getElementById('btnAmount');
+
+  btnPercent.addEventListener('click', () => {
+    currentRiskType = 'percent';
+    document.getElementById('riskPercentDiv').style.display = 'block';
+    document.getElementById('riskAmountDiv').style.display = 'none';
+
+    btnPercent.classList.add('active');
+    btnAmount.classList.remove('active');
+  });
+
+  btnAmount.addEventListener('click', () => {
+    currentRiskType = 'amount';
+    document.getElementById('riskPercentDiv').style.display = 'none';
+    document.getElementById('riskAmountDiv').style.display = 'block';
+
+    btnPercent.classList.remove('active');
+    btnAmount.classList.add('active');
+  });
+
+  // دالة حساب الربح
+  function getPipValue(pair, lot) {
+    pair = pair.toUpperCase();
+    if (pair.includes("JPY")) return lot * 1000;
+    if (pair === "XAUUSD") return lot * 1;
+    if (pair === "XAGUSD") return lot * 50;
+    return lot * 10;
+  }
+
+  function getPipSize(pair) {
+    return pair.includes("JPY") ? 0.01 : 0.0001;
+  }
+
+  function calculate() {
+    const entry = parseFloat(document.getElementById("entry").value);
+    const target = parseFloat(document.getElementById("target").value);
+    const lot = parseFloat(document.getElementById("lot").value);
+    const type = document.getElementById("type").value;
+    const pair = document.getElementById("pair").value.trim();
+
+    if (!entry || !target || !lot || !pair) {
+      document.getElementById("result").innerHTML = `<span class="loss">Please enter valid numbers and pair.</span>`;
+      return;
+    }
+
+    const pipValue = getPipValue(pair, lot);
+    const pipSize = getPipSize(pair);
+    const pips = type === "buy" ? (target - entry) : (entry - target);
+    const profit = (pips / pipSize) * pipValue;
+
+    const result = document.getElementById("result");
+    result.innerHTML = profit >= 0
+      ? `<span class="profit">Estimated Profit: $${profit.toFixed(2)}</span>`
+      : `<span class="loss">Estimated Loss: $${profit.toFixed(2)}</span>`;
+  }
+
+  // دالة حساب اللوت
+  function calculateLot() {
+    const balance = parseFloat(document.getElementById("balance").value);
+    const riskPercent = parseFloat(document.getElementById("riskPercent").value);
+    const riskAmountManual = parseFloat(document.getElementById("riskAmount").value);
+    const stopLoss = parseFloat(document.getElementById("stopLoss").value);
+    const pair = document.getElementById("lotPair").value.trim();
+
+    if (!balance || !stopLoss || !pair) {
+      document.getElementById("lotResult").innerHTML = `<span class="loss">Please enter valid balance, stop loss, and pair.</span>`;
+      return;
+    }
+
+    let riskAmount;
+    if (currentRiskType === "percent") {
+      if (!riskPercent || riskPercent <= 0) {
+        document.getElementById("lotResult").innerHTML = `<span class="loss">Enter valid risk percent.</span>`;
+        return;
+      }
+      riskAmount = balance * (riskPercent / 100);
+    } else {
+      if (!riskAmountManual || riskAmountManual <= 0) {
+        document.getElementById("lotResult").innerHTML = `<span class="loss">Enter valid risk amount.</span>`;
+        return;
+      }
+      riskAmount = riskAmountManual;
+    }
+
+    let pipValuePerLot;
+    if (pair.includes("JPY")) {
+      pipValuePerLot = 1000;
+    } else if (pair === "XAUUSD") {
+      pipValuePerLot = 1;
+    } else if (pair === "XAGUSD") {
+      pipValuePerLot = 50;
+    } else {
+      pipValuePerLot = 10;
+    }
+
+    const lotSize = riskAmount / (stopLoss * pipValuePerLot);
+
+    if (lotSize <= 0 || isNaN(lotSize) || !isFinite(lotSize)) {
+      document.getElementById("lotResult").innerHTML = `<span class="loss">Invalid inputs or calculation result.</span>`;
+      return;
+    }
+
+    document.getElementById("lotResult").innerHTML = `<span class="profit">Recommended Lot Size: ${lotSize.toFixed(2)} lots</span>`;
+  }
+
+</script>
+
+</body>
+</html>
